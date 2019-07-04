@@ -140,6 +140,34 @@ def overDrawImg(bgImg, fgImg, imgFrame, thresholdRange = (50, 255)):
     retImg = cv2.add(tmpBgImg, tmpFgImg)
     return retImg
 
+def createRandomTriangle(imgSize = (300, 300), figColor = (255, 255, 255), thickness = 1):
+    """
+    args
+        imgSize : tuple (width, height)
+        figColor : tuple (R, G, B)
+        thickness : int
+    return
+        triangle image : np.ndarray (R, G, B)
+    """
+    padding = (thickness // 2 + 1) if thickness > 0 else 1
+    shortLength = min(imgSize)
+    minPos = padding
+    maxPosX = imgSize[0] - padding
+    maxPosY = imgSize[1] - padding
+    ptList = []
+    for itPt in range(3):
+        ptList.append([rd.randrange(minPos, maxPosX), rd.randrange(minPos, maxPosY)])
+    ptNp = np.array(ptList, np.int32)
+    # 폴리곤 그리기로 삼각형 그리기
+    imgShape = imgSize + (3,)
+    triangleImg = np.zeros(imgShape, np.uint8)
+    cvFigColor = figColor[::-1]
+    if 0 > thickness:
+        cv2.fillPoly(triangleImg, [ptNp], cvFigColor)
+    else:
+        cv2.polylines(triangleImg, [ptNp], True, cvFigColor, thickness)
+    return cv2.cvtColor(triangleImg, cv2.COLOR_BGR2RGB)
+
 def getRandomColor(inten = 51):
     """랜덤 RGB 값을 반환함
     args
