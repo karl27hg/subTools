@@ -24,6 +24,35 @@ def createRandomCircle(imgSize = (300, 300), shapeColor = (255, 255, 255), thick
     cv2.circle(circleImg, centerPt, radius, cvShapeColor, thickness)
     return cv2.cvtColor(circleImg, cv2.COLOR_BGR2RGB)
 
+def createRandomSharpCircle(imgSize = (300, 300), shapeColor = (255, 255, 255), thickness = 1):
+    """sharp rectangle과 마찬가지로 두께에 영향을 줄이기 위한 코드
+    근데 만들고 나니 원은 상관없다는 사실을 늦게 깨달았다;
+    args
+        imgSize : tuple (width, height)
+        shapeColor : tuple (R, G, B)
+        thickness : int
+    return
+        circle img : cv2.np.ndarray
+    """
+    if 0 > thickness:
+        return createRandomCircle
+    # 바깥 원 정보 받음
+    centerPt, radius = _getRandomCircleInfo(imgSize, -1)
+    # 만약 반지름이 경계 두께보다 얇으면 다시 호출함
+    while radius < thickness:
+        centerPt, radius = _getRandomCircleInfo(imgSize, -1)
+    centerX, centerY = centerPt
+    # 바깥 원을 그림
+    imgShape = imgSize + (3,)
+    circleImg = np.zeros(imgShape, np.uint8)
+    cvShapeColor = shapeColor[::-1]
+    cv2.circle(circleImg, centerPt, radius, cvShapeColor, -1)
+    # 쪽 원을 반전 색으로 그림
+    revCvShapeColor = tuple(255 - cvShapeColor[itNum] for itNum in range(3))
+    cv2.circle(circleImg, centerPt, radius - thickness, revCvShapeColor, -1)
+    return cv2.cvtColor(circleImg, cv2.COLOR_BGR2RGB)
+    
+
 def createRandomRotatedRect(imgSize = (300, 300), rectColor = (255, 255, 255), thickness = 1):
     """짤림 방지된 회전된 사각형 생성 원을 기반으로 그림
     args
@@ -180,4 +209,6 @@ def getRandomColor(inten = 51):
             rd.randrange(0, 256, inten))
 
 if __name__ == "__main__":
-    pass
+    img = createRandomSharpCircle(thickness=5)
+    plt.imshow(img)
+    plt.show()
