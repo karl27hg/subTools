@@ -101,26 +101,28 @@ def createRandomRotatedSharpRect(imgSize = (300, 300), rectColor = (255, 255, 25
     centerX, centerY = centerPt
     # 사각형 그리기
     rectDeg = rd.randrange(10, 90, 10)
-    endX = int(round(centerX + radius * math.cos(rectDeg)))
-    endY = int(round(centerY + radius * math.sin(rectDeg)))
+    endX = int(round(centerX + radius * np.cos(np.deg2rad(rectDeg))))
+    endY = int(round(centerY + radius * np.sin(np.deg2rad(rectDeg))))
+    startX = int(round(centerX - radius * np.cos(np.deg2rad(rectDeg))))
+    startY = int(round(centerY - radius * np.sin(np.deg2rad(rectDeg))))
     endPt = (endX, endY)
-    startX = int(round(centerX - radius * math.cos(rectDeg)))
-    startY = int(round(centerY - radius * math.sin(rectDeg)))
     startPt = (startX, startY)
     imgShape = imgSize + (3,)
     rectImg = np.zeros(imgShape, np.uint8)
     cvRectColor = rectColor[::-1]
-    cv2.rectangle(rectImg, startPt, endPt, cvRectColor, -1)
     # 속 사각형 그리기
     startInPt = (startX + thickness, startY + thickness)
     endInPt = (endX - thickness, endY - thickness)
-    # 속 사각형을 그릴 수 없는 경우 재귀호출함
-    if startInPt[0] <= startPt[0] or startInPt[1] <= startPt[1]:
-        createRandomRotatedSharpRect(imgSize, rectColor, thickness)
-    if endInPt[0] >= endInPt[0] or endInPt[1] >= endPt[1]:
-        createRandomRotatedSharpRect(imgSize, rectColor, thickness)
+    # 속 사각형을 바깥 사각형보다 커지는 경우 재귀 호출함
+    if startInPt[0] > endInPt[0] or startInPt[1] > endInPt[1]:
+        return createRandomRotatedSharpRect(imgSize, rectColor, thickness)
+    cv2.rectangle(rectImg, startPt, endPt, cvRectColor, -1)
     cv2.rectangle(rectImg, startInPt, endInPt, (0,0,0), -1)
-    return cv2.cvtColor(rectImg, cv2.COLOR_BGR2RGB)
+    # 회전할 각도
+    rotDeg = rd.randrange(0, 90, 15)
+    rotMatrix = cv2.getRotationMatrix2D(centerPt, rotDeg, 1)
+    rotRectImg = cv2.warpAffine(rectImg, rotMatrix, imgSize)
+    return cv2.cvtColor(rotRectImg, cv2.COLOR_BGR2RGB)
 
 def _getRandomCircleInfo(imgSize, thickness, inPadding = None):
     """
@@ -207,6 +209,95 @@ def getRandomColor(inten = 51):
     return (rd.randrange(0, 256, inten),
             rd.randrange(0, 256, inten),
             rd.randrange(0, 256, inten))
+
+def gaussNoisy(img, var):
+    """NOTE: 미완성 메서드
+    가우스 노이즈 가우스 음의 값은 아직 연산을 하지 못함 개선이 필요함
+    args
+        img : np.ndarray
+        v
+    """
+    assert isinstance(img, np.ndarray)
+    assert var > 0
+    mean = 0
+    sigma = var ** 0.5
+    gauss = np.random.normal(mean, sigma, img.shape).astype("u1")
+    noisy = cv2.add(img, gauss)
+    return noisy
+
+# 고수준 메서드
+def createRandomColorCircle(imgSize = (300, 300), thickRange = (0, 20)):
+    """색상이 들어 있는 컬러 원 혹은 링을 그림
+    """
+    assert 2 == len(thickRange)
+    minThick, maxThick = min(thickRange), max(thickRange)
+    thick = rd.randrange(minThick, maxThick)
+    thick = thick if thick > 0 else -1
+    ringFrame = createRandomCircle(imgSize, thickness=thick)
+    imgShape = imgSize + (3,)
+    bgImg = np.zeros(imgShape, np.uint8)
+    bgImg[:] = getRandomColor()
+    fgImg = np.zeros(imgShape, np.uint8)
+    fgImg[:] = getRandomColor()
+    return overDrawImg(bgImg, fgImg, ringFrame)
+
+def overDrawRandomColorCircle(bgImg, thickRange = (1, 20)):
+    """이미지 위에 랜덤 색상의 랜덤 링을 그린다
+    """
+    assert isinstance(bgImg, np.ndarray)
+    assert 2 == len(thickRange)
+    minThick, maxThick = min(thickRange), max(thickRange)
+    thick = rd.randrange(minThick, maxThick)
+    thick = thick if thick > 0 else -1
+    ringFrame = createRandomCircle(bgImg.shape[:2], thickness=thick)
+    fgImg = np.zeros(bgImg.shape, np.uint8)
+    fgImg[:] = getRandomColor()
+    return overDrawImg(bgImg, fgImg, ringFrame)
+
+def createRandomRotatedColorRect(imgSize = (300, 300), thickRange = (0, 20)):
+    """임의의 색 배경에 임의의 색 외곽선의 회전하는 사각형
+    """
+    assert 2 == len(thickRange)
+    minThick, maxThick = min(thickRange), max(thickRange)
+    thick = rd.randrange(minThick, maxThick)
+    thick = thick if thick > 0 else -1
+    rectFrame = createRandomRotatedSharpRect(imgSize, thickness=thick)
+    imgShape = imgSize + (3,)
+    bgImg = np.zeros(imgShape, np.uint8)
+    bgImg[:] = getRandomColor()
+    fgImg = np.zeros(imgShape, np.uint8)
+    fgImg[:] = getRandomColor()
+    return overDrawImg(bgImg, fgImg, rectFrame)
+
+def overDrawRandomRotatedColorRect(bgImg, thickRange = (1, 20)):
+    """임의의 색 배경에 임의의 색 외곽선의 회전된 사각형 위에 동일한거 덧 그리기
+    """
+    assert isinstance(bgImg, np.ndarray)
+    assert 2 == len(thickRange)
+    minThick, maxThick = min(thickRange), max(thickRange)
+    thick = rd.randrange(minThick, maxThick)
+    thick = thick if thick > 0 else -1
+    rectFrame = createRandomRotatedSharpRect(bgImg.shape[:2], thickness=thick)
+    fgImg = np.zeros(bgImg.shape, np.uint8)
+    fgImg[:] = getRandomColor()
+    return overDrawImg(bgImg, fgImg, rectFrame)
+
+def getFigureImageData(imgSize = (300, 300), answer = 0, maxOverDraw = 2):
+    """임의의 도형 출력 해주는 함수
+    """
+    assert isinstance(answer, int)
+    # 사각형인 경우
+    countOverDraw = rd.randrange(maxOverDraw)
+    img = None
+    if 0 == answer:
+        img = createRandomRotatedColorRect(imgSize)
+        for itCount in range(countOverDraw):
+            img = overDrawRandomRotatedColorRect(img)
+    elif 1 == answer:
+        img = createRandomColorCircle(imgSize)
+        for itCount in range(countOverDraw):
+            img = overDrawRandomColorCircle(img)
+    return img
 
 if __name__ == "__main__":
     img = createRandomSharpCircle(thickness=5)
