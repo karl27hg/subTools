@@ -109,19 +109,51 @@ def getHistAccPlot(jsonData, isShowValAcc = True):
     acc_ax.legend(loc = "lower right")
     return fig
 
+def _tmpGetFigPlot(jsonDataList, dataLabel = "loss"):
+    """모델 비교를 위해서 임시로 만든 그래프
+    """
+    assert isinstance(jsonDataList, list)
+    labelDict = {
+        "loss" : "train loss",
+        "val_loss" : "val loss",
+        "acc" : "train acc",
+        "val_acc" : "val acc"
+    }
+    fig, ax = plt.subplots()
+    for itJsonData in jsonDataList:
+        ax.plot(itJsonData[dataLabel], label = itJsonData["modelName"])
+    ax.set_xlabel("epoch")
+    ax.set_ylabel(labelDict[dataLabel])
+    ax.legend(loc = "upper left")
+    return fig
+
 if __name__ == "__main__":
-    # jsonDataList = []
-    # fileName = "VGG16_rd_ep500.json"
-    # fileName = "inceptionV4_rd_ep500.json"
-    fileName = "resnet50_rd_ep500.json"
-    jsonFilePath = os.path.join("./dataMan", fileName)
-    with open(jsonFilePath, "r") as f:
-        jsonData = json.load(f)
-    checkEpochCount(jsonData)
-    # getHistPlot(jsonData)
-    fig = getHistLossPlot(jsonData)
-    fig.savefig("tmpFig.png", format="png")
-    # plt.show(fig)
-    fig1 = getHistAccPlot(jsonData)
-    fig1.savefig("tmpFig1.png", format="png")
-    # plt.show(fig1)
+    # # jsonDataList = []
+    # # fileName = "VGG16_rd_ep500.json"
+    # # fileName = "inceptionV4_rd_ep500.json"
+    # fileName = "resnet50_rd_ep500.json"
+    # jsonFilePath = os.path.join("./dataTool", fileName)
+    # with open(jsonFilePath, "r") as f:
+    #     jsonData = json.load(f)
+    # checkEpochCount(jsonData)
+    # # getHistPlot(jsonData)
+    # fig = getHistLossPlot(jsonData)
+    # fig.savefig("tmpFig.png", format="png")
+    # # plt.show(fig)
+    # fig1 = getHistAccPlot(jsonData)
+    # fig1.savefig("tmpFig1.png", format="png")
+    # # plt.show(fig1)
+    # 
+    # 
+    fileNames = ["VGG16_rd_ep500.json", "inceptionV4_rd_ep500.json", "resnet50_rd_ep500.json"]
+    jsonDataList = []
+    for itFileName in fileNames:
+        jsonName, _ = os.path.splitext(itFileName)
+        jsonFilePath = os.path.join("./dataTool", itFileName)
+        with open(jsonFilePath) as f:
+            jsonData = json.load(f)
+            jsonData["modelName"] = jsonName
+            jsonDataList.append(jsonData)
+    for itlabel in ["loss", "val_loss", "acc", "val_acc"]:
+        fig = _tmpGetFigPlot(jsonDataList, itlabel)
+        fig.savefig("modelComp_" + itlabel +".png", format="png")
