@@ -39,7 +39,7 @@ def _getImgResizeOneLength(srcImg, wantSize, isRgb=True):
             elif 0 == wantHeight:
                 resizeFlag = _getResizeFilter(srcWidth > wantWidth)
                 dstHeight = (srcHeight * wantWidth) // srcWidth
-                dstSzie = (wantWidth, dstHeight)
+                dstSize = (wantWidth, dstHeight)
                 dstImg = cv2.resize(tmpImg, dsize=dstSize, interpolation=resizeFlag)
     return cv2.cvtColor(dstImg, cv2.COLOR_BGR2RGB) if isRgb else dstImg
 
@@ -122,25 +122,70 @@ def maintainRateResize(srcImg, wantSize = (300, 300), isRgb = True):
     return dstImg
 
 def noCropRotateImg(srcImg, rotatedAngle):
-    """삭제되는 영역 없이 회전시킴
+    """삭제되는 영역 없이 회전시킴 현재는 예각만 제대로 유호하다.
+    45도를 넘어가고 가로세로 비율이 1:1이 아니면 문제가 발생할 수 있다.
+    args
+        srcImg : np.ndarray
+        rotatedAngle : number
+    return
+        cropImg : np.ndarray not has hall
     """
-    assert 90 > rotatedAngle and 0 <= rotatedAngle
-    tmpImg = np.copy(srcImg)
+    assert 90. > rotatedAngle and 0. <= rotatedAngle
+    tmpImg = srcImg.copy()
     imgFrameSize = tmpImg.shape[:2]
-    rotatedRadians = np.radians(rotatedAngle)
+    rotatedRadians = np.radians(rotatedAngle -45)
     # 잘리지 않을 만한 크기 계산
-    centerY, centerX = imgFrameSize
-    centerY, centerX = centerY // 2, centerX // 2
-    pass
+    srcHeight, srcWidth = imgFrameSize
+    centerY, centerX = srcHeight // 2, srcWidth // 2
+    print("src center", centerX, centerY)
+    maxRadius = np.sqrt(centerX**2 + centerY**2)
+    boundaryOnY = centerX * np.tan(rotatedRadians)
+    minRadius = np.sqrt(centerX**2 + boundaryOnY**2)
+    smallWidth = int(round(srcWidth * minRadius / maxRadius))
+    smallHeight = int(round(srcHeight * minRadius / maxRadius))
+    # smallSize = (smallHeight, smallWidth)
+    # print(maxRadius, minRadius)
+    smallImg = _getImgResizeOneLength(tmpImg, (smallWidth, 0))
+    print("small image size:", smallImg.shape)
+    deltaWidth = srcWidth - smallWidth
+    deltaHeight = srcHeight - smallHeight
+    halfDeltaWidth = deltaWidth // 2
+    halfDeltaHeight = deltaHeight // 2
+    # padding 용 아직은 예각만 해당됨
+    betaWidthRadians = np.arcsin(srcHeight / (2 * maxRadius))
+    halfBigDeltaWidth = int(maxRadius * np.cos(betaWidthRadians - rotatedRadians))
+    betaHeightRadians = np.arcsin(srcWidth / (2 * maxRadius))
+    halfBigDeltaHeight = int(maxRadius * np.cos(betaHeightRadians - rotatedRadians))
+    # bigImg = cv2.copyMakeBorder(smallImg, halfDeltaHeight, halfDeltaHeight, halfDeltaWidth, halfDeltaWidth, cv2.BORDER_REPLICATE)
+    bigImg = cv2.copyMakeBorder(smallImg, halfBigDeltaHeight, halfBigDeltaHeight, halfBigDeltaWidth, halfBigDeltaWidth, cv2.BORDER_REPLICATE)
+    print("big iamge size:", bigImg.shape)
+    bigImgHeight, bigImgWidth = bigImg.shape[:2]
+    bigCenterY, bigCenterX = bigImgHeight // 2, bigImgWidth // 2
+    rotMatrix = cv2.getRotationMatrix2D((bigCenterX, bigCenterY), rotatedAngle, 1)
+    rotatedImg = cv2.warpAffine(bigImg, rotMatrix, (bigImgWidth, bigImgHeight))
+    # 자르기
+    deltaCropY = (bigImgHeight - srcHeight) // 2
+    deltaCropX = (bigImgWidth - srcWidth) // 2
+    cropImg = rotatedImg[deltaCropY : bigImgHeight - deltaCropY, deltaCropX : bigImgWidth - deltaCropX]
+    print("crop iamge size:", cropImg.shape)
+    # return rotatedImg
+    return cropImg
+
 
 if __name__ == "__main__":
-    os.chdir("./sampleData")
-    sampleFilePath = os.path.join(
-        os.getcwd(), 
-        "2D_miku_V4X.jpg"
-        )
+    # os.chdir("./sampleData")
+    # sampleFilePath = os.path.join(
+    #     os.getcwd(), 
+    #     "2D_miku_V4X.jpg"
+    #     )
     import matplotlib.pyplot as plt
-    srcImg = cv2.imread(sampleFilePath)
-    noCropRotateImg(srcImg, 30)
-    plt.imshow(cv2.cvtColor(srcImg, cv2.COLOR_BGR2RGB))
-    # plt.show()
+    # srcImg = cv2.imread(sampleFilePath)
+    srcImg = np.zeros((300, 300, 3), np.uint8)
+    cv2.rectangle(srcImg, (0, 0), (300, 300), (255, 0, 0), thickness=-1)
+    cv2.rectangle(srcImg, (3, 3), (297, 297), (255, 255, 255), thickness=-1)
+    resultImg = noCropRotateImg(srcImg, 30)
+    plt.imshow(cv2.cvtColor(resultImg, cv2.COLOR_BGR2RGB))
+    plt.show()
+    # cv2.imshow("rect", resultImg)
+    # cv2.waitKey(0)
+    # cv2.destroyAllWindows()
