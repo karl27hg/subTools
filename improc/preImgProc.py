@@ -130,7 +130,9 @@ def noCropRotateImg(srcImg, rotatedAngle):
     return
         cropImg : np.ndarray not has hall
     """
-    assert 90. > rotatedAngle and 0. <= rotatedAngle
+    # assert 90. > rotatedAngle and 0. <= rotatedAngle
+    halfPiCount = rotatedAngle // 90
+    print("Angles:", rotatedAngle)
     tmpImg = srcImg.copy()
     imgFrameSize = tmpImg.shape[:2]
     rotatedRadians = np.radians(rotatedAngle -45)
@@ -153,9 +155,9 @@ def noCropRotateImg(srcImg, rotatedAngle):
     halfDeltaHeight = deltaHeight // 2
     # padding 용 아직은 예각만 해당됨
     betaWidthRadians = np.arcsin(srcHeight / (2 * maxRadius))
-    halfBigDeltaWidth = int(maxRadius * np.cos(betaWidthRadians - rotatedRadians))
+    halfBigDeltaWidth = abs(int(maxRadius * np.cos(betaWidthRadians - rotatedRadians)))
     betaHeightRadians = np.arcsin(srcWidth / (2 * maxRadius))
-    halfBigDeltaHeight = int(maxRadius * np.cos(betaHeightRadians - rotatedRadians))
+    halfBigDeltaHeight = abs(int(maxRadius * np.cos(betaHeightRadians - rotatedRadians)))
     # bigImg = cv2.copyMakeBorder(smallImg, halfDeltaHeight, halfDeltaHeight, halfDeltaWidth, halfDeltaWidth, cv2.BORDER_REPLICATE)
     bigImg = cv2.copyMakeBorder(smallImg, halfBigDeltaHeight, halfBigDeltaHeight, halfBigDeltaWidth, halfBigDeltaWidth, cv2.BORDER_REPLICATE)
     print("big iamge size:", bigImg.shape)
@@ -183,9 +185,15 @@ if __name__ == "__main__":
     srcImg = np.zeros((300, 300, 3), np.uint8)
     cv2.rectangle(srcImg, (0, 0), (300, 300), (255, 0, 0), thickness=-1)
     cv2.rectangle(srcImg, (3, 3), (297, 297), (255, 255, 255), thickness=-1)
-    resultImg = noCropRotateImg(srcImg, 30)
-    plt.imshow(cv2.cvtColor(resultImg, cv2.COLOR_BGR2RGB))
-    plt.show()
-    # cv2.imshow("rect", resultImg)
-    # cv2.waitKey(0)
-    # cv2.destroyAllWindows()
+    resultImg = noCropRotateImg(srcImg, 0)
+    # plt.imshow(cv2.cvtColor(resultImg, cv2.COLOR_BGR2RGB))
+    # plt.show()
+    cv2.imshow("rect", resultImg)
+    import time
+    for itAngle in range(0, 360, 10):
+        # time.sleep(1)
+        resultImg = noCropRotateImg(srcImg, itAngle)
+        cv2.imshow("rect", resultImg)
+        cv2.waitKey(1000)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
