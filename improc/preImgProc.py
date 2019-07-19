@@ -1,6 +1,9 @@
 import cv2
 import os
 import numpy as np
+import sys
+sys.path.append(os.path.dirname(__file__))
+from imgProc import ColorPixelManager
 
 __version__ = 0.1
 
@@ -70,10 +73,21 @@ def maintainRateResize(srcImg, wantSize = (300, 300), isRgb = True):
                         halfDeltaHeight = deltaHeight // 2
                         # rgb와 bgr 순서를 자주 바꾸지 않도록 하기 위해 RGB인 경우 BGR로 미리 바꿈
                         workImg = cv2.cvtColor(srcImg, cv2.COLOR_RGB2BGR) if isRgb else srcImg.copy()
-                        tmpImg = _getImgResizeOneLength(workImg, (wantWidth, 0), not isRgb)
+                        tmpImg = _getImgResizeOneLength(workImg, (wantWidth, 0), False)
                         # 홀수일 경우 윗쪽에 1 pixel 더 padding 함
                         oddHeight = 1 if 1 == deltaHeight % 2 else 0
-                        dstImg = cv2.copyMakeBorder(tmpImg, halfDeltaHeight + oddHeight, halfDeltaHeight, 0, 0, cv2.BORDER_REPLICATE)
+                        # dstImg = cv2.copyMakeBorder(tmpImg, halfDeltaHeight + oddHeight, halfDeltaHeight, 0, 0, cv2.BORDER_REPLICATE)
+                        bordertmpImg = tmpImg[:1, :]
+                        tmpColorPixel = ColorPixelManager(bordertmpImg)
+                        _, maxColorStr = tmpColorPixel.getMinMaxPixel()
+                        maxColor = [int(it) for it in maxColorStr.split(",")]
+                        dstImg = cv2.copyMakeBorder(tmpImg, halfDeltaHeight + oddHeight, 0, 0, 0, cv2.BORDER_CONSTANT, value=maxColor)
+                        tmpImgRows = tmpImg.shape[0]
+                        bordertmpImg = tmpImg[tmpImgRows-1:tmpImgRows, :]
+                        tmpColorPixel = ColorPixelManager(bordertmpImg)
+                        _, maxColorStr = tmpColorPixel.getMinMaxPixel()
+                        maxColor = [int(it) for it in maxColorStr.split(",")]
+                        dstImg = cv2.copyMakeBorder(dstImg, 0, halfDeltaHeight, 0, 0, cv2.BORDER_CONSTANT, value=maxColor)
                         dstImg = cv2.cvtColor(dstImg, cv2.COLOR_BGR2RGB) if isRgb else dstImg
                     # width에 padding이 필요한 경우
                     elif tmpHeight > wantHeight:
@@ -82,10 +96,21 @@ def maintainRateResize(srcImg, wantSize = (300, 300), isRgb = True):
                         halfDeltaWidth = deltaWidth // 2
                         # rgb와 bgr 순서를 자주 바꾸지 않도록 하기 위해 RGB인 경우 BGR로 미리 바꿈
                         workImg = cv2.cvtColor(srcImg, cv2.COLOR_RGB2BGR) if isRgb else srcImg.copy()
-                        tmpImg = _getImgResizeOneLength(workImg, (0, wantHeight), not isRgb)
+                        tmpImg = _getImgResizeOneLength(workImg, (0, wantHeight), False)
                         # 홀수일 경우 왼쪽에 1 pixel 더 padding 함
                         oddWidth = 1 if 1 == deltaWidth % 2 else 0
-                        dstImg = cv2.copyMakeBorder(tmpImg, 0, 0, halfDeltaWidth + oddWidth, halfDeltaWidth, cv2.BORDER_REPLICATE)
+                        # dstImg = cv2.copyMakeBorder(tmpImg, 0, 0, halfDeltaWidth + oddWidth, halfDeltaWidth, cv2.BORDER_REPLICATE)
+                        bordertmpImg = tmpImg[:, :1]
+                        tmpColorPixel = ColorPixelManager(bordertmpImg)
+                        _, maxColorStr = tmpColorPixel.getMinMaxPixel()
+                        maxColor = [int(it) for it in maxColorStr.split(",")]
+                        dstImg = cv2.copyMakeBorder(tmpImg, 0, 0, halfDeltaWidth + oddWidth, 0, cv2.BORDER_CONSTANT, value=maxColor)
+                        tmpImgCols = tmpImg.shape[1]
+                        bordertmpImg = tmpImg[:, tmpImgCols-1:tmpImgCols]
+                        tmpColorPixel = ColorPixelManager(bordertmpImg)
+                        _, maxColorStr = tmpColorPixel.getMinMaxPixel()
+                        maxColor = [int(it) for it in maxColorStr.split(",")]
+                        dstImg = cv2.copyMakeBorder(dstImg, 0, 0, 0, halfDeltaWidth, cv2.BORDER_CONSTANT, value=maxColor)
                         dstImg = cv2.cvtColor(dstImg, cv2.COLOR_BGR2RGB) if isRgb else dstImg
                     # padding이 필요 없는 경우
                     else:
@@ -99,10 +124,21 @@ def maintainRateResize(srcImg, wantSize = (300, 300), isRgb = True):
                         halfDeltaWidth = deltaWidth // 2
                         # rgb와 bgr 순서를 자주 바꾸지 않도록 하기 위해 RGB인 경우 BGR로 미리 바꿈
                         workImg = cv2.cvtColor(srcImg, cv2.COLOR_RGB2BGR) if isRgb else srcImg.copy()
-                        tmpImg = _getImgResizeOneLength(workImg, (0, wantHeight), not isRgb)
+                        tmpImg = _getImgResizeOneLength(workImg, (0, wantHeight), False)
                         # 홀수일 경우 왼쪽에 1 pixel 더 padding 함
                         oddWidth = 1 if 1 == deltaWidth % 2 else 0
-                        dstImg = cv2.copyMakeBorder(tmpImg, 0, 0, halfDeltaWidth + oddWidth, halfDeltaWidth, cv2.BORDER_REPLICATE)
+                        # dstImg = cv2.copyMakeBorder(tmpImg, 0, 0, halfDeltaWidth + oddWidth, halfDeltaWidth, cv2.BORDER_REPLICATE)
+                        bordertmpImg = tmpImg[:1, :]
+                        tmpColorPixel = ColorPixelManager(bordertmpImg)
+                        _, maxColorStr = tmpColorPixel.getMinMaxPixel()
+                        maxColor = [int(it) for it in maxColorStr.split(",")]
+                        dstImg = cv2.copyMakeBorder(tmpImg, halfDeltaHeight + oddHeight, 0, 0, 0, cv2.BORDER_CONSTANT, value=maxColor)
+                        tmpImgRows = tmpImg.shape[0]
+                        bordertmpImg = tmpImg[tmpImgRows-1:tmpImgRows, :]
+                        tmpColorPixel = ColorPixelManager(bordertmpImg)
+                        _, maxColorStr = tmpColorPixel.getMinMaxPixel()
+                        maxColor = [int(it) for it in maxColorStr.split(",")]
+                        dstImg = cv2.copyMakeBorder(dstImg, 0, halfDeltaHeight, 0, 0, cv2.BORDER_CONSTANT, value=maxColor)
                         dstImg = cv2.cvtColor(dstImg, cv2.COLOR_BGR2RGB) if isRgb else dstImg
                     # height에 padding이 필요한 경우
                     elif tmpWidth > wantWidth:
@@ -111,10 +147,21 @@ def maintainRateResize(srcImg, wantSize = (300, 300), isRgb = True):
                         halfDeltaHeight = deltaHeight // 2
                         # rgb와 bgr 순서를 자주 바꾸지 않도록 하기 위해 RGB인 경우 BGR로 미리 바꿈
                         workImg = cv2.cvtColor(srcImg, cv2.COLOR_RGB2BGR) if isRgb else srcImg.copy()
-                        tmpImg = _getImgResizeOneLength(workImg, (wantWidth, 0), not isRgb)
+                        tmpImg = _getImgResizeOneLength(workImg, (wantWidth, 0), False)
                         # 홀수일 경우 윗쪽에 1 pixel 더 padding 함
                         oddHeight = 1 if 1 == deltaHeight % 2 else 0
-                        dstImg = cv2.copyMakeBorder(tmpImg, halfDeltaHeight + oddHeight, halfDeltaHeight, 0, 0, cv2.BORDER_REPLICATE)
+                        # dstImg = cv2.copyMakeBorder(tmpImg, halfDeltaHeight + oddHeight, halfDeltaHeight, 0, 0, cv2.BORDER_REPLICATE)
+                        bordertmpImg = tmpImg[:, :1]
+                        tmpColorPixel = ColorPixelManager(bordertmpImg)
+                        _, maxColorStr = tmpColorPixel.getMinMaxPixel()
+                        maxColor = [int(it) for it in maxColorStr.split(",")]
+                        dstImg = cv2.copyMakeBorder(tmpImg, 0, 0, halfDeltaWidth + oddWidth, 0, cv2.BORDER_CONSTANT, value=maxColor)
+                        tmpImgCols = tmpImg.shape[1]
+                        bordertmpImg = tmpImg[:, tmpImgCols-1:tmpImgCols]
+                        tmpColorPixel = ColorPixelManager(bordertmpImg)
+                        _, maxColorStr = tmpColorPixel.getMinMaxPixel()
+                        maxColor = [int(it) for it in maxColorStr.split(",")]
+                        dstImg = cv2.copyMakeBorder(dstImg, 0, 0, 0, halfDeltaWidth, cv2.BORDER_CONSTANT, value=maxColor)
                         dstImg = cv2.cvtColor(dstImg, cv2.COLOR_BGR2RGB) if isRgb else dstImg
                     # padding이 필요 없는 경우
                     else:
@@ -154,10 +201,12 @@ def noCropRotateImg(srcImg, rotatedAngle):
     halfDeltaWidth = deltaWidth // 2
     halfDeltaHeight = deltaHeight // 2
     # padding 용 아직은 예각만 해당됨
+    # 귀찮아서 상수를 더했는데, 수학적으로는 맞지 않음
+    paddingModfiyConst = 10
     betaWidthRadians = np.arcsin(srcHeight / (2 * maxRadius))
-    halfBigDeltaWidth = abs(int(maxRadius * np.cos(betaWidthRadians - rotatedRadians)))
+    halfBigDeltaWidth = abs(int(round(maxRadius * np.cos(betaWidthRadians - rotatedRadians)))) + paddingModfiyConst
     betaHeightRadians = np.arcsin(srcWidth / (2 * maxRadius))
-    halfBigDeltaHeight = abs(int(maxRadius * np.cos(betaHeightRadians - rotatedRadians)))
+    halfBigDeltaHeight = abs(int(round(maxRadius * np.cos(betaHeightRadians - rotatedRadians)))) + paddingModfiyConst
     # bigImg = cv2.copyMakeBorder(smallImg, halfDeltaHeight, halfDeltaHeight, halfDeltaWidth, halfDeltaWidth, cv2.BORDER_REPLICATE)
     bigImg = cv2.copyMakeBorder(smallImg, halfBigDeltaHeight, halfBigDeltaHeight, halfBigDeltaWidth, halfBigDeltaWidth, cv2.BORDER_REPLICATE)
     print("big iamge size:", bigImg.shape)
@@ -190,10 +239,21 @@ if __name__ == "__main__":
     # plt.show()
     cv2.imshow("rect", resultImg)
     import time
-    for itAngle in range(0, 360, 10):
-        # time.sleep(1)
+    for itAngle in range(0, 91, 5):
+    # for itAngle in [5]:
+        cv2.waitKey(200)
         resultImg = noCropRotateImg(srcImg, itAngle)
         cv2.imshow("rect", resultImg)
-        cv2.waitKey(1000)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
+
+    # 
+    import os, cv2
+    dirPath, _ = os.path.split( os.path.dirname(__file__))
+    imgFileName = "2019062000671_0.jpg"
+    imgFilePath = os.path.join(dirPath, "images", imgFileName)
+    srcImg = cv2.imread(imgFilePath)
+    mainImg = maintainRateResize(srcImg, wantSize = (300, 300), isRgb = True)
+    cv2.imshow("resize", mainImg)
     cv2.waitKey(0)
     cv2.destroyAllWindows()
