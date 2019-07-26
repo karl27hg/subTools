@@ -71,6 +71,48 @@ class ColorPixelManager:
         """
         return len(self.pixelDict[dictKey])
 
+# =======================================================
+# 이미지를 메모리에 load를 해봄으로 이미지가 영상인지 확인함
+def checkImageFiles(imgFilePathList):
+    """이미지 파일이 로드가 가능한 것인지 확인하는 메서드
+    원리는 그냥 PIL로 메모리에 올려보면서 예최가 발생하는지 확인함
+    """
+    from PIL import Image
+    tmpImg = None
+    for itIndex, itPath in enumerate(imgFilePathList):
+        try:
+            tmpImg = Image.open(itPath)
+        except Exception as ex:
+            print("Error : [{}] : {}".format(itIndex, itPath))
+            print("{} : {}".format(type(ex).__name__, ex.__str__()))
+
+def showImageFiles(imgPathList):
+    """본래 디버그 용도로 만듬
+    """
+    # %matplotlib inlie
+    import matplotlib.pyplot as plt
+    count = len(imgPathList)
+    r, c, = 1, 1
+    while r * c < count:
+        if r == c:
+            c += 1
+        else:
+            r += 1
+    oldParams = plt.rcParams["figure.figsize"]
+    plt.rcParams["figure.figsize"] = [r*10, c*10]
+    fig = plt.figure()
+    subImgList = []
+    for itNum, itImg in enumerate(imgPathList):
+        num = itNum + 1
+        a = fig.add_subplot(r, c, num)
+        a.imshow(itImg)
+        a.axis("off")
+        a.set_title(itNum)
+        subImgList.append(a)
+    plt.show()
+    plt.rcParams["figure.figsize"] = oldParams
+
+
 if __name__ == "__main__":
     import os, cv2
     dirPath, _ = os.path.split( os.path.dirname(__file__))
