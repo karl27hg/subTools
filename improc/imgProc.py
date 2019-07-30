@@ -73,11 +73,26 @@ class ColorPixelManager:
 
 # =======================================================
 # 이미지를 메모리에 load를 해봄으로 이미지가 영상인지 확인함
-def checkImageFiles(imgFilePathList):
+def checkImageFiles(imgFilePathList, logFilePath=None):
     """이미지 파일이 로드가 가능한 것인지 확인하는 메서드
     원리는 그냥 PIL로 메모리에 올려보면서 예최가 발생하는지 확인함
     """
     from PIL import Image
+    # logging setting
+    import logging
+    logger = logging.getLogger(checkImageFiles.__name__)
+    if not logger.hasHandlers():
+        logger.setLevel(logging.INFO)
+        logFormat = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+        if logFilePath is not None:
+            logFile = logging.FileHandler(logFilePath, encoding="utf-8")
+            logFile.setFormatter(logFormat)
+            logger.addHandler(logFile)
+        else:
+            logStream = logging.StreamHandler()
+            logStream.setFormatter(logFormat)
+            logger.addHandler(logStream)
+    # start check image
     tmpImg = None
     for itIndex, itPath in enumerate(imgFilePathList):
         try:
